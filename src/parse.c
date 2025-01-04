@@ -9,6 +9,13 @@
 #include "common.h"
 #include "parse.h"
 
+/**
+ * Lists all employees stored in the database by printing their details to stdout
+ * Displays name, address, and hours for each employee
+ * 
+ * @param dbheader: Pointer to the database header containing metadata
+ * @param employees: Array of employee records to display
+ */
 void list_employees(struct dbheader_t *dbheader, struct employee_t *employees) {
   int employeeCount = dbheader->count;
   
@@ -20,7 +27,17 @@ void list_employees(struct dbheader_t *dbheader, struct employee_t *employees) {
   }
 }
 
-int add_employee(struct dbheader_t *dbheader, struct employee_t *employees, char *addstring) {
+/**
+ * Adds a new employee to the database from a comma separated string
+ * Expected format: "name,address,hours"
+ * Assumes the employees array has already been reallocated to accommodate the new employee
+ * 
+ * @param dbheader: Pointer to the database header containing metadata
+ * @param employees: Array of employee records to add to
+ * @param addstring: Comma-separated string containing employee data
+ * 
+ * @return STATUS_OK on success, STATUS_ERROR on failure
+ */int add_employee(struct dbheader_t *dbheader, struct employee_t *employees, char *addstring) {
   char *name = strtok(addstring, ",");
   char *address = strtok(NULL, ",");
   char *hours = strtok(NULL, ",");
@@ -33,7 +50,20 @@ int add_employee(struct dbheader_t *dbheader, struct employee_t *employees, char
   return STATUS_OK;
 }
 
-int read_employees(int fd, struct dbheader_t *dbheader, struct employee_t **employeesOut) {
+/**
+ * Reads employee records from the database file and allocates memory for them
+ * The caller is responsible for freeing the allocated memory pointed to by employeesOut
+ * 
+ * @param fd: File descriptor for the database file
+ * @param dbheader: Pointer to the database header containing metadata
+ * @param employeesOut: Output parameter - will contain pointer to newly allocated employee array
+ * 
+ * @return STATUS_OK on success, STATUS_ERROR on failure
+ *         Failures can occur on:
+ *         - Invalid file descriptors
+ *         - Memory allocation failures
+ *         - Read operation failures
+ */int read_employees(int fd, struct dbheader_t *dbheader, struct employee_t **employeesOut) {
   if (fd < 0) {
     printf("Got a bad file descriptor from user\n");
     return STATUS_ERROR;
@@ -58,6 +88,19 @@ int read_employees(int fd, struct dbheader_t *dbheader, struct employee_t **empl
   return STATUS_OK;
 }
 
+/**
+ * Writes the complete database to disk, including header and employee records
+ * Converts all multi-byte values to network byte order before writing
+ * 
+ * @param fd: File descriptor for the database file
+ * @param dbheader: Pointer to database header to write
+ * @param employees: Array of employee records to write
+ * 
+ * @return STATUS_OK on success, STATUS_ERROR on failure
+ *         Failures can occur on:
+ *         - An invalid file descriptor
+ *         - Write operation failures
+ */
 int output_file(int fd, struct dbheader_t *dbheader, struct employee_t *employees) {
   if (fd < 0) {
     printf("Got a bad file descriptor from user\n");
@@ -84,6 +127,24 @@ int output_file(int fd, struct dbheader_t *dbheader, struct employee_t *employee
   return STATUS_OK;
 }
 
+/**
+ * Validates an existing database header from disk
+ * Checks magic number, version, and file size for consistency
+ * Converts multi-byte values from network to host byte order
+ * The caller is responsible for freeing the allocated header memory
+ * 
+ * @param fd: File descriptor for the database file
+ * @param headerOut: Output parameter - will contain pointer to newly allocated and validated header
+ * 
+ * @return STATUS_OK on success, STATUS_ERROR on failure
+ *         Failures can occur on:
+ *         - Invalid file descriptors
+ *         - Memory allocation failures
+ *         - Read operation failures
+ *         - An invalid magic number
+ *         - A wrong version number
+ *         - A corrupted file size
+ */
 int validate_db_header(int fd, struct dbheader_t **headerOut) {
   if (fd < 0) {
     printf("Got a bad file descriptor from user\n");
@@ -133,6 +194,17 @@ int validate_db_header(int fd, struct dbheader_t **headerOut) {
   return STATUS_OK;
 }
 
+/**
+ * Creates a new database header with default values
+ * The caller is responsible for freeing the allocated header memory
+ * 
+ * @param fd: File descriptor for the database file (unused, could be removed)
+ * @param headerOut: Output parameter - will contain pointer to newly allocated header
+ * 
+ * @return STATUS_OK on success, STATUS_ERROR on failure
+ *         Failures can occur on:
+ *         - Memory allocation failures
+ */
 int create_db_header(int fd, struct dbheader_t **headerOut) {
   struct dbheader_t *header = calloc(1, sizeof(struct dbheader_t));
 

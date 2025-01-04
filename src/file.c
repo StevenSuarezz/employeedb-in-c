@@ -8,8 +8,20 @@
 #include "common.h"
 #include "file.h"
 
+/**
+* Creates a new database file with read/write permissions
+* Checks if file already exists to prevent overwriting
+* 
+* @param filename: Path where database file should be created
+* 
+* @return File descriptor on success, STATUS_ERROR on failure
+*         Failures occur if:
+*         - File already exists
+*         - Unable to create file (permissions/disk full)
+*
+* Note: Caller is responsible for closing the returned file descriptor
+*/
 int create_db_file(char *filename) {
-  // Guard clause to ensure we do not create a new file if it already exists
   int fd = open(filename, O_RDONLY);
   if (fd != -1) {
     close(fd);
@@ -26,6 +38,19 @@ int create_db_file(char *filename) {
   return fd;
 }
 
+/**
+* Opens an existing database file in read/write mode.
+* 
+* @param filename: Path to existing database file
+* 
+* @return File descriptor on success, STATUS_ERROR on failure
+*         Failures occur if:
+*         - File doesn't exist
+*         - Insufficient permissions
+*         - Other system errors (see errno)
+*
+* Note: Caller is responsible for closing the returned file descriptor
+*/
 int open_db_file(char *filename) {
   int fd = open(filename, O_RDWR, 0644);
   if (fd == -1) {
