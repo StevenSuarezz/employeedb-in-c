@@ -10,11 +10,17 @@
 #include "parse.h"
 
 void list_employees(struct dbheader_t *dbheader, struct employee_t *employees) {
+  int employeeCount = dbheader->count;
+  
+  for(int i = 0; i < employeeCount; i++) {
+    printf("Employee %d\n", i);
+    printf("\t Name: %s\n", employees[i].name);
+    printf("\t Address: %s\n", employees[i].address);
+    printf("\t Hours: %d\n", employees[i].hours);
+  }
 }
 
 int add_employee(struct dbheader_t *dbheader, struct employee_t *employees, char *addstring) {
-  printf("%s\n", addstring);
-
   char *name = strtok(addstring, ",");
   char *address = strtok(NULL, ",");
   char *hours = strtok(NULL, ",");
@@ -23,7 +29,6 @@ int add_employee(struct dbheader_t *dbheader, struct employee_t *employees, char
   strncpy(employees[employeeIndex].name, name, sizeof(employees[employeeIndex].name));
   strncpy(employees[employeeIndex].address, address, sizeof(employees[employeeIndex].address));
   employees[employeeIndex].hours = atoi(hours);
-  printf("In add_employee: %s %s %d\n", employees[employeeIndex].name, employees[employeeIndex].address, employees[employeeIndex].hours);
 
   return STATUS_OK;
 }
@@ -60,8 +65,6 @@ int output_file(int fd, struct dbheader_t *dbheader, struct employee_t *employee
   }
 
   int employeeCount = dbheader->count;
-  if (employeeCount > 0)
-    printf("In output_file: %s %s %d\n", employees[0].name, employees[0].address, employees[0].hours);
 
   // Pack into network endianness
   dbheader->magic = htonl(dbheader->magic);
