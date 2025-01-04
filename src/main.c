@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
     list_employees(dbheader, employees); 
   }
 
-
   output_file(dbfd, dbheader, employees);
+  free(dbheader);
+  free(employees);
 }
