@@ -7,6 +7,9 @@ run: clean default
 	./$(TARGET) -f ./mydb.db
 	./$(TARGET) -f ./mydb.db -a "Steven Suarez,123 applebees ln,120"
 
+leak_check: clean default
+	valgrind --leak-check=yes ./$(TARGET) -f ./mydb.db -n -a "Steven Suarez,123 applebees ln,120" -l
+
 default: $(TARGET)
 
 clean:
