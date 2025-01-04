@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "common.h"
 #include "file.h"
@@ -19,15 +20,20 @@ int main(int argc, char *argv[]) {
   bool newfile = false;
   int dbfd = -1;
   struct dbheader_t *dbheader = NULL;
+  struct employee_t *employees = NULL;
+  char *addstring = NULL;
   int c;
 
-  while ((c = getopt(argc, argv, "nf:")) != -1) {
+  while ((c = getopt(argc, argv, "nf:a:")) != -1) {
     switch (c) {
     case 'n':
       newfile = true;
       break;
     case 'f':
       filepath = optarg;
+      break;
+    case 'a':
+      addstring = optarg;
       break;
     case '?':
       printf("Unknown option -%c\n", c);
@@ -68,5 +74,17 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  output_file(dbfd, dbheader);
+  if (read_employees(dbfd, dbheader, &employees) != STATUS_OK) {
+    printf("Failed to read employees\n");
+    return -1;
+  }
+
+  if (addstring) {
+    dbheader->count++;
+    employees = realloc(employees, dbheader->count * sizeof(struct employee_t));
+    memset(&employees[dbheader->count - 1], 0, sizeof(struct employee_t));
+    add_employee(dbheader, employees, addstring);
+  }
+
+  output_file(dbfd, dbheader, employees);
 }

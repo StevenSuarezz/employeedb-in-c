@@ -12,25 +12,71 @@
 void list_employees(struct dbheader_t *dbheader, struct employee_t *employees) {
 }
 
-int add_employee(struct dbheader_t *dbheader, struct employee_t *employees, char *addstring) {}
+int add_employee(struct dbheader_t *dbheader, struct employee_t *employees, char *addstring) {
+  printf("%s\n", addstring);
 
-int read_employees(int fd, struct dbheader_t *dbheader, struct employee_t **employeesOut) {}
+  char *name = strtok(addstring, ",");
+  char *address = strtok(NULL, ",");
+  char *hours = strtok(NULL, ",");
 
-int output_file(int fd, struct dbheader_t *dbheader/*,struct employee_t *employees*/) {
+  int employeeIndex = dbheader->count - 1;
+  strncpy(employees[employeeIndex].name, name, sizeof(employees[employeeIndex].name));
+  strncpy(employees[employeeIndex].address, address, sizeof(employees[employeeIndex].address));
+  employees[employeeIndex].hours = atoi(hours);
+  printf("In add_employee: %s %s %d\n", employees[employeeIndex].name, employees[employeeIndex].address, employees[employeeIndex].hours);
+
+  return STATUS_OK;
+}
+
+int read_employees(int fd, struct dbheader_t *dbheader, struct employee_t **employeesOut) {
   if (fd < 0) {
     printf("Got a bad file descriptor from user\n");
     return STATUS_ERROR;
   }
 
+  int employeeCount = dbheader->count;
+
+  struct employee_t *employees = calloc(employeeCount, sizeof(struct employee_t));
+  if (employees == -1) {
+    printf("Malloc failed to create employee array\n");
+    return STATUS_ERROR;
+  }
+
+  read(fd, employees, employeeCount * sizeof(struct employee_t));
+
+  // Unpack employee hours to host endianness
+  for (int i = 0; i < employeeCount; i++) {
+    employees[i].hours = ntohl(employees[i].hours);
+  }
+
+  *employeesOut = employees;
+  return STATUS_OK;
+}
+
+int output_file(int fd, struct dbheader_t *dbheader, struct employee_t *employees) {
+  if (fd < 0) {
+    printf("Got a bad file descriptor from user\n");
+    return STATUS_ERROR;
+  }
+
+  int employeeCount = dbheader->count;
+  if (employeeCount > 0)
+    printf("In output_file: %s %s %d\n", employees[0].name, employees[0].address, employees[0].hours);
+
   // Pack into network endianness
   dbheader->magic = htonl(dbheader->magic);
   dbheader->version = htons(dbheader->version);
   dbheader->count = htons(dbheader->count);
-  dbheader->filesize = htonl(dbheader->filesize);
+  dbheader->filesize = htonl(sizeof(struct dbheader_t) + employeeCount * sizeof(struct employee_t));
 
   // Call lseek to reposition the open file offset to the beginning before we write the header
   lseek(fd, 0, SEEK_SET);
   write(fd, dbheader, sizeof(struct dbheader_t));
+
+  for(int i = 0; i < employeeCount; i++) {
+    employees[i].hours = htonl(employees[i].hours);
+    write(fd, &employees[i], sizeof(struct employee_t));
+  }
 
   return STATUS_OK;
 }

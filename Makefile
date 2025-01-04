@@ -6,6 +6,7 @@ run: clean default
 #	./$(TARGET) -n
 	./$(TARGET) -f ./mydb.db -n
 	./$(TARGET) -f ./mydb.db
+	./$(TARGET) -f ./mydb.db -a "Steven Suarez,123 applebees ln,120"
 
 default: $(TARGET)
 
